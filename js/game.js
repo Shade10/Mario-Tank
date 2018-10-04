@@ -13,8 +13,8 @@ var GAME_CONFIG = {
 };
 
 var PLAYER_CONFIG = {
-    WIDTH: 20,
-    HEIGHT: 20,
+    WIDTH: 40,
+    HEIGHT: 60,
     MAX_SPEED: 2,     // 0.4 best setting
     MAX_SPEED_ROTATE: 1.8,  // 0.3 best setting
     POSITION_X: 0,
@@ -41,9 +41,9 @@ function setPosition(targ, x, y, deg) {
 
 function borderCollision(value, min, max) {
     if (value < min) {
-        return min;
-    } else if (value > max) {
         return max;
+    } else if (value > max) {
+        return min;
     } else return value;
 }
 
@@ -56,8 +56,8 @@ init();
 // PLAYER
 
 function createPlayer(container) {
-    PLAYER_CONFIG.POSITION_X = ( GAME_CONFIG.WIDTH / 2 ) - ( PLAYER_CONFIG.WIDTH / 2);
-    PLAYER_CONFIG.POSITION_Y = ( GAME_CONFIG.HEIGHT / 2 ) - (PLAYER_CONFIG.HEIGHT / 2);
+    PLAYER_CONFIG.POSITION_X = (GAME_CONFIG.WIDTH / 2) - (PLAYER_CONFIG.WIDTH / 2);
+    PLAYER_CONFIG.POSITION_Y = (GAME_CONFIG.HEIGHT / 2) - (PLAYER_CONFIG.HEIGHT / 2);
     PLAYER_CONFIG.DEGREE = (Math.PI * 2) / 360;
 
     var player = document.createElement("div");
@@ -65,11 +65,11 @@ function createPlayer(container) {
 
     container.appendChild(player);
 
-    
+
     setPosition(player, PLAYER_CONFIG.POSITION_X, PLAYER_CONFIG.POSITION_Y, PLAYER_CONFIG.DEGREE);
 };
 
-function updatePlayer(dataTime) {
+function updatePlayer() {
     var player = document.querySelector('.player');
     if (GAME_STATE.up_Key) {
         PLAYER_CONFIG.POSITION_X += PLAYER_CONFIG.MAX_SPEED * Math.sin(PLAYER_CONFIG.DEGREE * PLAYER_CONFIG.ANGLE);
@@ -85,20 +85,28 @@ function updatePlayer(dataTime) {
     if (GAME_STATE.rotate_Left) {
         PLAYER_CONFIG.ANGLE -= (PLAYER_CONFIG.MAX_SPEED_ROTATE);
     }
-    
+
+    PLAYER_CONFIG.POSITION_X = borderCollision(PLAYER_CONFIG.POSITION_X, 
+        0 - PLAYER_CONFIG.WIDTH,
+        GAME_CONFIG.WIDTH + PLAYER_CONFIG.WIDTH);
+
+    PLAYER_CONFIG.POSITION_Y = borderCollision(PLAYER_CONFIG.POSITION_Y, 
+        PLAYER_CONFIG.HEIGHT - (PLAYER_CONFIG.HEIGHT * 2 ),
+        GAME_CONFIG.HEIGHT);
+
+
     setPosition(player, PLAYER_CONFIG.POSITION_X, PLAYER_CONFIG.POSITION_Y, PLAYER_CONFIG.ANGLE);
 }
 // RENDER GAME
 
 function renderGame() {
-    var currentTime = Date.now();
-    var dataTime = (currentTime - GAME_STATE.lastTime) / 1000;
+    // var currentTime = Date.now();
+    // var dataTime = (currentTime - GAME_STATE.lastTime) / 1000;
+    // var container = document.querySelector('.game');
+    updatePlayer();
 
-    var container = document.querySelector('.game');
-    updatePlayer(dataTime);
 
-
-    GAME_STATE.lastTime = currentTime;
+    // GAME_STATE.lastTime = currentTime;
     window.requestAnimationFrame(renderGame);
 }
 // KEY HANDLER

@@ -33,6 +33,7 @@ body {
   background: #222;
 }
 .game {
+  overflow: hidden;
   width: 1200px;
   height: 700px;
   background: url(../img/background-blue.png);
