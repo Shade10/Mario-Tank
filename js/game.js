@@ -26,9 +26,10 @@ var TURRET_CONFIG = {
     POSITION_Y: 0,
     BASE_X: 0,
     BASE_Y: 0,
+    COUNTDOWN: 3,
 }
 
-var MOUSE_CONFIG ={
+var MOUSE_CONFIG = {
     POSITION_X: 0,
     POSITION_Y: 0,
 }
@@ -106,11 +107,12 @@ function createPlayer(container) {
     container.appendChild(player);
 
     setPosition(player, PLAYER_CONFIG.POSITION_X, PLAYER_CONFIG.POSITION_Y, PLAYER_CONFIG.DEGREE);
-    setPosition(turret, 0, 0, TURRET_CONFIG.ANGLE)
+    setRotation(turret, TURRET_CONFIG.ANGLE)
 };
 //END
 function updatePlayer() {
     var player = document.querySelector('.player');
+    var turret = document.querySelector('.turret');
     if (GAME_STATE.up_Key) {
         PLAYER_CONFIG.POSITION_X += PLAYER_CONFIG.MAX_SPEED * Math.sin(PLAYER_CONFIG.DEGREE * PLAYER_CONFIG.ANGLE);
         PLAYER_CONFIG.POSITION_Y -= PLAYER_CONFIG.MAX_SPEED * Math.cos(PLAYER_CONFIG.DEGREE * PLAYER_CONFIG.ANGLE);
@@ -125,6 +127,16 @@ function updatePlayer() {
     if (GAME_STATE.rotate_Left) {
         PLAYER_CONFIG.ANGLE -= (PLAYER_CONFIG.MAX_SPEED_ROTATE);
     }
+
+    if (GAME_STATE.r_key === false && GAME_STATE.q_key) {
+        TURRET_CONFIG.ANGLE-- ;
+        turret.style.transform = 'rotate(' + TURRET_CONFIG.ANGLE + 'deg)';
+    }
+    if (GAME_STATE.r_key === false && GAME_STATE.e_key) {
+        TURRET_CONFIG.ANGLE++; 
+        turret.style.transform = 'rotate(' + TURRET_CONFIG.ANGLE + 'deg)';
+    }
+
 
     PLAYER_CONFIG.POSITION_X = borderCollision(PLAYER_CONFIG.POSITION_X,
         0 - PLAYER_CONFIG.WIDTH,
@@ -143,7 +155,7 @@ function renderGame() {
     var cannon = document.querySelector(".game");
 
     updatePlayer();
-    cannon.addEventListener("mousemove", getMouseDirection);
+    // cannon.addEventListener("mousemove", getMouseDirection);
 
     // GAME_STATE.lastTime = currentTime;
     window.requestAnimationFrame(renderGame);
@@ -153,17 +165,14 @@ function renderGame() {
 
 function getMouseDirection(e) {
     var turret = document.querySelector('.turret');
-    MOUSE_CONFIG.POSITION_X = e.clientX + 20 ;
-    MOUSE_CONFIG.POSITION_Y = e.clientY + 50;
+    MOUSE_CONFIG.POSITION_X = e.clientX - PLAYER_CONFIG.WIDTH / 2;
+    MOUSE_CONFIG.POSITION_Y = e.clientY + PLAYER_CONFIG.HEIGHT / 2;
     TURRET_CONFIG.BASE_X = GAME_CONFIG.WIDTH / 1.5;
     TURRET_CONFIG.BASE_Y = GAME_CONFIG.HEIGHT / 1.5;
 
-    TURRET_CONFIG.ANGLE = Math.atan2(MOUSE_CONFIG.POSITION_X - TURRET_CONFIG.BASE_X, -(MOUSE_CONFIG.POSITION_Y - TURRET_CONFIG.BASE_Y)) *  (180 / Math.PI );
+    TURRET_CONFIG.ANGLE = Math.atan2(MOUSE_CONFIG.POSITION_X - TURRET_CONFIG.BASE_X, -(MOUSE_CONFIG.POSITION_Y - TURRET_CONFIG.BASE_Y)) * (180 / Math.PI);
     TURRET_CONFIG.ANGLE -= PLAYER_CONFIG.ANGLE;
     TURRET_CONFIG.ANGLE = turret.style.transform = 'rotate(' + TURRET_CONFIG.ANGLE + 'deg)';
-
-    //update turret pos
-    turretPositionUpdater(turret);
 }
 
 function keyDown(e) {
@@ -177,18 +186,24 @@ function keyDown(e) {
         GAME_STATE.rotate_Left = true;
     } else if (e.keyCode === GAME_CONTROL.SPACE) {
         GAME_STATE.spacePressed = true;
+    } else if (e.keyCode === GAME_CONTROL.KEY_Q) {
+        GAME_STATE.q_key = true;
+    } else if (e.keyCode === GAME_CONTROL.KEY_E) {
+        GAME_STATE.e_key = true;
     }
-
-};
-
-function keyPress(e) {
-    if (GAME_STATE.KEY_R === true) {
-        if (e.keyCode === GAME_CONTROL.KEY_Q) {
-            GAME_STATE.KEY_Q = true;
-
+    else if (event.keyCode === GAME_CONTROL.KEY_R) {
+        if (!GAME_STATE.r_key) {
+            GAME_STATE.r_key = true;
+            window.addEventListener('mousemove', getMouseDirection)
+            return;
+        }
+        if (GAME_STATE.r_key) {
+            GAME_STATE.r_key = false;
+            window.removeEventListener('mousemove', getMouseDirection);
+            return;
         }
     }
-}
+};
 
 function keyUp(e) {
     if (e.keyCode === GAME_CONTROL.KEY_W) {
@@ -201,12 +216,16 @@ function keyUp(e) {
         GAME_STATE.rotate_Left = false;
     } else if (e.keyCode === GAME_CONTROL.SPACE) {
         GAME_STATE.spacePressed = false;
+    } else if (e.keyCode === GAME_CONTROL.KEY_Q) {
+        GAME_STATE.q_key = false;
+    } else if (e.keyCode === GAME_CONTROL.KEY_E) {
+        GAME_STATE.e_key = false;
     }
 };
 
 window.addEventListener('keydown', keyDown);
 window.addEventListener('keyup', keyUp);
-window.addEventListener('.keypress', keyPress)
+// window.addEventListener('keypress', keyPress)
 window.requestAnimationFrame(renderGame);
 
 // #endregion
