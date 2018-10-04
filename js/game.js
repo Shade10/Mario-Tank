@@ -24,6 +24,8 @@ var TURRET_CONFIG = {
     ANGLE: 0,
     POSITION_X: 0,
     POSITION_Y: 0,
+    BASE_X: 0,
+    BASE_Y: 0,
 }
 
 var MOUSE_CONFIG ={
@@ -57,12 +59,15 @@ var GAME_STATE = {
 
 // #endregion
 
-
 // #region some Function
 
 function setPosition(targ, x, y, deg) {
     targ.style.transform = "translate(" + x + "px, " + y + "px) rotate(" + deg + "deg)";
 };
+
+function setRotation(container, deg) {
+    container.style.transform = "rotate(" + deg + "deg)";
+}
 
 function borderCollision(value, min, max) {
     if (value < min) {
@@ -96,11 +101,9 @@ function createPlayer(container) {
     turret.className = 'turret'
     cannon.className = "cannon";
 
-
     turret.appendChild(cannon);
     player.appendChild(turret);
     container.appendChild(player);
-
 
     setPosition(player, PLAYER_CONFIG.POSITION_X, PLAYER_CONFIG.POSITION_Y, PLAYER_CONFIG.DEGREE);
     setPosition(turret, 0, 0, TURRET_CONFIG.ANGLE)
@@ -131,16 +134,13 @@ function updatePlayer() {
         PLAYER_CONFIG.HEIGHT - (PLAYER_CONFIG.HEIGHT * 2),
         GAME_CONFIG.HEIGHT);
 
-
     setPosition(player, PLAYER_CONFIG.POSITION_X, PLAYER_CONFIG.POSITION_Y, PLAYER_CONFIG.ANGLE);
 }
-
 // #endregion
 // RENDER GAME
 
 function renderGame() {
     var cannon = document.querySelector(".game");
-
 
     updatePlayer();
     cannon.addEventListener("mousemove", getMouseDirection);
@@ -151,36 +151,19 @@ function renderGame() {
 
 // #region key handler
 
-function setRotation(container, deg) {
-    container.style.transform = "rotate(" + deg + "deg)";
-
-}
-
-function getMouseDirection(event) {
+function getMouseDirection(e) {
     var turret = document.querySelector('.turret');
+    MOUSE_CONFIG.POSITION_X = e.clientX + 20 ;
+    MOUSE_CONFIG.POSITION_Y = e.clientY + 50;
+    TURRET_CONFIG.BASE_X = GAME_CONFIG.WIDTH / 1.5;
+    TURRET_CONFIG.BASE_Y = GAME_CONFIG.HEIGHT / 1.5;
 
-    MOUSE_CONFIG.POSITION_X = event.pageY + event.pageX;
-    MOUSE_CONFIG.POSITION_Y = event.pageX - event.pageY;
+    TURRET_CONFIG.ANGLE = Math.atan2(MOUSE_CONFIG.POSITION_X - TURRET_CONFIG.BASE_X, -(MOUSE_CONFIG.POSITION_Y - TURRET_CONFIG.BASE_Y)) *  (180 / Math.PI );
+    TURRET_CONFIG.ANGLE -= PLAYER_CONFIG.ANGLE;
+    TURRET_CONFIG.ANGLE = turret.style.transform = 'rotate(' + TURRET_CONFIG.ANGLE + 'deg)';
 
-    // if (GAME_CONFIG.MOUSE_X < event.pageX) {
-    //     TURRET_CONFIG.ANGLE = event.pageX;
-    //     console.log(TURRET_CONFIG.POSITION_X);
-    //     console.log(TURRET_CONFIG.POSITION_Y)
-    // } else {
-    //     TURRET_CONFIG.ANGLE = event.pageX;
-    // }
-
-    // if (GAME_CONFIG.MOUSE_Y < event.pageY) {
-    //     TURRET_CONFIG.ANGLE = event.pageY;
-    // } else {
-    //     TURRET_CONFIG.ANGLE = event.pageY;
-    // }
-
-    TURRET_CONFIG.ANGLE = (Math.atan2(MOUSE_CONFIG.POSITION_Y, MOUSE_CONFIG.POSITION_X) * 360);
-    // TURRET_CONFIG.ANGLE = e.pageX;
-    // TURRET_CONFIG.ANGLE = e.pageY;
-
-    setRotation(turret, TURRET_CONFIG.ANGLE)
+    //update turret pos
+    turretPositionUpdater(turret);
 }
 
 function keyDown(e) {
@@ -225,6 +208,5 @@ window.addEventListener('keydown', keyDown);
 window.addEventListener('keyup', keyUp);
 window.addEventListener('.keypress', keyPress)
 window.requestAnimationFrame(renderGame);
-
 
 // #endregion
