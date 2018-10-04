@@ -49,30 +49,49 @@ body {
     background-position-y: 256px;
   }
 }
- .game .enemy {
-  position: absolute;
-  margin-left: -20px;
-  margin-top: -18px;
-  width: 40px;
-}
+
  .game .player {
-  position: absolute;
+  position: relative;
+  border: 1 solid black;
   margin-left: -20px;
   margin-top: -20px;
   height: 60px;
   width:  40px;
+  overflow: visible;
   background: red;
 }
- .game .laser {
+
+.game .laser {
   position: absolute;
   margin-left: -2.5px;
   height: 60px;
 }
- .game .enemy-laser {
+
+.game .turret{
   position: absolute;
-  margin-left: -2.5px;
+  margin-left: 5px;
+  margin-top: 10px;
+  justify-content: center;
+  align-items: center;
   height: 30px;
+  width:  30px;
+  border-radius: 50%;
+  background: blue;
 }
+
+ .game .cannon{
+  position: absolute;
+  overflow: visible;
+  margin-top: -4px;
+  margin-left: 5px;
+  justify-content: center;
+  align-items: center;
+  transform: rotate(90deg);
+  height: 6px;
+  width:  20px;
+  background: turquoise;
+ }
+ 
  .congratulations {
   display: none;
   position: absolute;
