@@ -15,7 +15,8 @@ var GAME_CONFIG = {
 var PLAYER_CONFIG = {
     WIDTH: 20,
     HEIGHT: 20,
-    MAX_SPEED: 400,
+    MAX_SPEED: 2,     // 0.4 best setting
+    MAX_SPEED_ROTATE: 1.8,  // 0.3 best setting
     POSITION_X: 0,
     POSITION_Y: 0,
     DEGREE: 0,
@@ -55,8 +56,8 @@ init();
 // PLAYER
 
 function createPlayer(container) {
-    PLAYER_CONFIG.POSITION_X = GAME_CONFIG.WIDTH / 2;
-    PLAYER_CONFIG.POSITION_Y = GAME_CONFIG.HEIGHT - 50;
+    PLAYER_CONFIG.POSITION_X = ( GAME_CONFIG.WIDTH / 2 ) - ( PLAYER_CONFIG.WIDTH / 2);
+    PLAYER_CONFIG.POSITION_Y = ( GAME_CONFIG.HEIGHT / 2 ) - (PLAYER_CONFIG.HEIGHT / 2);
     PLAYER_CONFIG.DEGREE = (Math.PI * 2) / 360;
 
     var player = document.createElement("div");
@@ -64,26 +65,27 @@ function createPlayer(container) {
 
     container.appendChild(player);
 
+    
     setPosition(player, PLAYER_CONFIG.POSITION_X, PLAYER_CONFIG.POSITION_Y, PLAYER_CONFIG.DEGREE);
 };
 
 function updatePlayer(dataTime) {
+    var player = document.querySelector('.player');
     if (GAME_STATE.up_Key) {
-        PLAYER_CONFIG.POSITION_X -= Math.cos(dataTime * PLAYER_CONFIG.MAX_SPEED) * PLAYER_CONFIG.ANGLE;
-        PLAYER_CONFIG.POSITION_Y -= Math.sin(dataTime * PLAYER_CONFIG.MAX_SPEED) * PLAYER_CONFIG.ANGLE;
+        PLAYER_CONFIG.POSITION_X += PLAYER_CONFIG.MAX_SPEED * Math.sin(PLAYER_CONFIG.DEGREE * PLAYER_CONFIG.ANGLE);
+        PLAYER_CONFIG.POSITION_Y -= PLAYER_CONFIG.MAX_SPEED * Math.cos(PLAYER_CONFIG.DEGREE * PLAYER_CONFIG.ANGLE);
     }
     if (GAME_STATE.down_Key) {
-        PLAYER_CONFIG.POSITION_Y += Math.cos(dataTime * PLAYER_CONFIG.MAX_SPEED);
-        PLAYER_CONFIG.POSITION_Y += Math.sin(dataTime * PLAYER_CONFIG.MAX_SPEED);
+        PLAYER_CONFIG.POSITION_Y += PLAYER_CONFIG.MAX_SPEED * Math.cos(PLAYER_CONFIG.DEGREE * PLAYER_CONFIG.ANGLE);
+        PLAYER_CONFIG.POSITION_X -= PLAYER_CONFIG.MAX_SPEED * Math.sin(PLAYER_CONFIG.DEGREE * PLAYER_CONFIG.ANGLE);
     }
     if (GAME_STATE.rotate_Right) {
-        PLAYER_CONFIG.ANGLE++
+        PLAYER_CONFIG.ANGLE += (PLAYER_CONFIG.MAX_SPEED_ROTATE);
     }
     if (GAME_STATE.rotate_Left) {
-        PLAYER_CONFIG.ANGLE--;
+        PLAYER_CONFIG.ANGLE -= (PLAYER_CONFIG.MAX_SPEED_ROTATE);
     }
-  
-    var player = document.querySelector('.player');
+    
     setPosition(player, PLAYER_CONFIG.POSITION_X, PLAYER_CONFIG.POSITION_Y, PLAYER_CONFIG.ANGLE);
 }
 // RENDER GAME
