@@ -1,9 +1,9 @@
 "use strict"
 var GAME_CONTROL = {
-    KEY_W: 37,
-    KEY_S: 39,
-    KEY_D: 38,
-    KEY_A: 40,
+    KEY_W: 87,
+    KEY_S: 83,
+    KEY_D: 68,
+    KEY_A: 65,
     SPACE: 32,
 };
 
@@ -18,22 +18,24 @@ var PLAYER_CONFIG = {
     MAX_SPEED: 400,
     POSITION_X: 0,
     POSITION_Y: 0,
+    DEGREE: 0,
+    ANGLE: 0,
 };
 
 
 
 var GAME_STATE = {
     lastTime: Date.now(),
-    wPressed: false,
-    sPressed: false,
-    dPressed: false,
-    aPressed: false,
+    up_Key: false,
+    down_Key: false,
+    rotate_Right: false,
+    rotate_Left: false,
     spacePressed: false,
 
 };
 
-function setPosition(targ, x, y) {
-    targ.style.transform = "translate(" + x + "px, " + y + "px)";
+function setPosition(targ, x, y, deg) {
+    targ.style.transform = "translate(" + x + "px, " + y + "px) rotate(" + deg + "deg)";
 };
 
 function borderCollision(value, min, max) {
@@ -55,32 +57,34 @@ init();
 function createPlayer(container) {
     PLAYER_CONFIG.POSITION_X = GAME_CONFIG.WIDTH / 2;
     PLAYER_CONFIG.POSITION_Y = GAME_CONFIG.HEIGHT - 50;
+    PLAYER_CONFIG.DEGREE = (Math.PI * 2) / 360;
 
-    var player = document.createElement("img");
-    player.src = "../img/marioTank.png";
+    var player = document.createElement("div");
     player.className = "player";
 
     container.appendChild(player);
 
-    setPosition(player, PLAYER_CONFIG.POSITION_X, PLAYER_CONFIG.POSITION_Y);
+    setPosition(player, PLAYER_CONFIG.POSITION_X, PLAYER_CONFIG.POSITION_Y, PLAYER_CONFIG.DEGREE);
 };
 
-function KEY_DdatePlayer(dataTime) {
-    if (GAME_STATE.wPressed) {
-        PLAYER_CONFIG.POSITION_X -= dataTime * PLAYER_CONFIG.MAX_SPEED;
+function updatePlayer(dataTime) {
+    if (GAME_STATE.up_Key) {
+        PLAYER_CONFIG.POSITION_X -= Math.cos(dataTime * PLAYER_CONFIG.MAX_SPEED) * PLAYER_CONFIG.ANGLE;
+        PLAYER_CONFIG.POSITION_Y -= Math.sin(dataTime * PLAYER_CONFIG.MAX_SPEED) * PLAYER_CONFIG.ANGLE;
     }
-    if (GAME_STATE.sPressed) {
-        PLAYER_CONFIG.POSITION_X += dataTime * PLAYER_CONFIG.MAX_SPEED;
+    if (GAME_STATE.down_Key) {
+        PLAYER_CONFIG.POSITION_Y += Math.cos(dataTime * PLAYER_CONFIG.MAX_SPEED);
+        PLAYER_CONFIG.POSITION_Y += Math.sin(dataTime * PLAYER_CONFIG.MAX_SPEED);
     }
-    if (GAME_STATE.dPressed) {
-        PLAYER_CONFIG.POSITION_Y -= dataTime * PLAYER_CONFIG.MAX_SPEED;
+    if (GAME_STATE.rotate_Right) {
+        PLAYER_CONFIG.ANGLE++
     }
-    if (GAME_STATE.aPressed) {
-        PLAYER_CONFIG.POSITION_Y += dataTime * PLAYER_CONFIG.MAX_SPEED;
+    if (GAME_STATE.rotate_Left) {
+        PLAYER_CONFIG.ANGLE--;
     }
   
     var player = document.querySelector('.player');
-    setPosition(player, PLAYER_CONFIG.POSITION_X, PLAYER_CONFIG.POSITION_Y);
+    setPosition(player, PLAYER_CONFIG.POSITION_X, PLAYER_CONFIG.POSITION_Y, PLAYER_CONFIG.ANGLE);
 }
 // RENDER GAME
 
@@ -89,7 +93,7 @@ function renderGame() {
     var dataTime = (currentTime - GAME_STATE.lastTime) / 1000;
 
     var container = document.querySelector('.game');
-    KEY_DdatePlayer(dataTime);
+    updatePlayer(dataTime);
 
 
     GAME_STATE.lastTime = currentTime;
@@ -99,13 +103,13 @@ function renderGame() {
 
 function keyDown(e) {
     if (e.keyCode === GAME_CONTROL.KEY_W) {
-        GAME_STATE.wPressed = true;
+        GAME_STATE.up_Key = true;
     } else if (e.keyCode === GAME_CONTROL.KEY_S) {
-        GAME_STATE.sPressed = true;
+        GAME_STATE.down_Key = true;
     } else if (e.keyCode === GAME_CONTROL.KEY_D) {
-        GAME_STATE.dPressed = true;
+        GAME_STATE.rotate_Right = true;
     } else if (e.keyCode === GAME_CONTROL.KEY_A) {
-        GAME_STATE.aPressed = true;
+        GAME_STATE.rotate_Left = true;
     } else if (e.keyCode === GAME_CONTROL.SPACE) {
         GAME_STATE.spacePressed = true;
     }
@@ -113,13 +117,13 @@ function keyDown(e) {
 
 function keyUp(e) {
     if (e.keyCode === GAME_CONTROL.KEY_W) {
-        GAME_STATE.wPressed = false;
+        GAME_STATE.up_Key = false;
     } else if (e.keyCode === GAME_CONTROL.KEY_S) {
-        GAME_STATE.sPressed = false;
+        GAME_STATE.down_Key = false;
     } else if (e.keyCode === GAME_CONTROL.KEY_D) {
-        GAME_STATE.dPressed = false;
+        GAME_STATE.rotate_Right = false;
     } else if (e.keyCode === GAME_CONTROL.KEY_A) {
-        GAME_STATE.aPressed = false;
+        GAME_STATE.rotate_Left = false;
     } else if (e.keyCode === GAME_CONTROL.SPACE) {
         GAME_STATE.spacePressed = false;
     }
