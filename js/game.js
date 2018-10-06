@@ -27,6 +27,15 @@ var TURRET_CONFIG = {
     BASE_X: 0,
     BASE_Y: 0,
     COUNTDOWN: 3,
+    START_COUNT_DOWN: 3,
+}
+
+var BULLET_CONFIG = {
+    BULLETS_LIST: [],
+    POSITION_X: 0,
+    POSITION_Y: 0,
+    MAX_SPEED: 100,
+    ANGLE: 0,
 }
 
 var MOUSE_CONFIG = {
@@ -38,7 +47,7 @@ var PLAYER_CONFIG = {
     WIDTH: 40,
     HEIGHT: 60,
     MAX_SPEED: 2,     // 0.4 best setting
-    MAX_SPEED_ROTATE: 1.8,  // 0.3 best setting
+    MAX_SPEED_ROTATE: 1.5,  // 0.3 best setting
     POSITION_X: 0,
     POSITION_Y: 0,
     DEGREE: 0,
@@ -55,7 +64,8 @@ var GAME_STATE = {
     q_key: false,
     e_key: false,
     spacePressed: false,
-
+    turret_reloaded: false,
+    bullet_ready: false, // not use yet
 };
 
 // #endregion
@@ -68,6 +78,18 @@ function setPosition(targ, x, y, deg) {
 
 function setRotation(container, deg) {
     container.style.transform = "rotate(" + deg + "deg)";
+}
+
+function reloadBullet(countdown) {
+    var counter = document.querySelector('.sideRight')
+    counter.innerText = 'Bullet Reload: ' + countdown + 's';
+
+    countdown--
+    if (countdown === 0) {
+        GAME_STATE.turret_reloaded = true;
+        countdown.innerText = 'Bullet Reload: ' + BULLET_CONFIG.START_COUNT_DOWN + 's';
+        clearInterval();
+    }
 }
 
 function borderCollision(value, min, max) {
@@ -83,10 +105,11 @@ function init() {
     createPlayer(container);
 };
 init();
-
 // #endregion
 
 // #region player 
+
+
 
 // PLAYER
 
@@ -109,10 +132,11 @@ function createPlayer(container) {
     setPosition(player, PLAYER_CONFIG.POSITION_X, PLAYER_CONFIG.POSITION_Y, PLAYER_CONFIG.DEGREE);
     setRotation(turret, TURRET_CONFIG.ANGLE)
 };
-//END
-function updatePlayer() {
+
+function updatePlayer(container) {
     var player = document.querySelector('.player');
     var turret = document.querySelector('.turret');
+    var sideRight = document.querySelector('.sideRight');
     if (GAME_STATE.up_Key) {
         PLAYER_CONFIG.POSITION_X += PLAYER_CONFIG.MAX_SPEED * Math.sin(PLAYER_CONFIG.DEGREE * PLAYER_CONFIG.ANGLE);
         PLAYER_CONFIG.POSITION_Y -= PLAYER_CONFIG.MAX_SPEED * Math.cos(PLAYER_CONFIG.DEGREE * PLAYER_CONFIG.ANGLE);
@@ -129,13 +153,49 @@ function updatePlayer() {
     }
 
     if (GAME_STATE.r_key === false && GAME_STATE.q_key) {
-        TURRET_CONFIG.ANGLE-- ;
-        turret.style.transform = 'rotate(' + TURRET_CONFIG.ANGLE + 'deg)';
+        TURRET_CONFIG.ANGLE--;
     }
     if (GAME_STATE.r_key === false && GAME_STATE.e_key) {
-        TURRET_CONFIG.ANGLE++; 
-        turret.style.transform = 'rotate(' + TURRET_CONFIG.ANGLE + 'deg)';
+        TURRET_CONFIG.ANGLE++;
     }
+    if (GAME_STATE.spacePressed) {
+        if (GAME_STATE.bullet_ready && !GAME_STATE.turret_reloaded) {
+            createBullet(container, PLAYER_CONFIG.POSITION_X, PLAYER_CONFIG.POSITION_Y, PLAYER_CONFIG.ANGLE)
+            GAME_STATE.bullet_ready = false;
+            console.log(GAME_STATE.bullet_ready);
+            sideRight.innerHTML = 'Reload ise needed';
+            return;
+        }
+        if (GAME_STATE.turret_reloaded) {
+            console.log('reload in progress');
+            return;
+        }
+        if (!GAME_STATE.bullet_ready) {
+            console.log('reloading');
+            GAME_STATE.turret_reloaded = true;
+            TURRET_CONFIG.START_COUNT_DOWN = TURRET_CONFIG.COUNTDOWN;
+            console.log('ball ready in ' + TURRET_CONFIG.START_COUNT_DOWN);
+            sideRight.innerHTML = 'Ready in ' + TURRET_CONFIG.START_COUNT_DOWN + 's';
+
+            var interval = setInterval(() => {
+                TURRET_CONFIG.START_COUNT_DOWN--;
+                console.log('ball ready in ' + TURRET_CONFIG.START_COUNT_DOWN)
+                sideRight.innerHTML = 'Ready in ' + TURRET_CONFIG.START_COUNT_DOWN + 's';
+
+            }, 1000);
+
+            setTimeout(() => {
+                GAME_STATE.bullet_ready = true;
+                GAME_STATE.turret_reloaded = false;
+                sideRight.innerHTML = 'Ready';
+                console.log('bulletReady');
+                clearInterval(interval);
+            }, 3000);
+            return;
+        }
+    }
+
+
 
 
     PLAYER_CONFIG.POSITION_X = borderCollision(PLAYER_CONFIG.POSITION_X,
@@ -147,32 +207,84 @@ function updatePlayer() {
         GAME_CONFIG.HEIGHT);
 
     setPosition(player, PLAYER_CONFIG.POSITION_X, PLAYER_CONFIG.POSITION_Y, PLAYER_CONFIG.ANGLE);
+    setRotation(turret, TURRET_CONFIG.ANGLE);
 }
+
+// PLAYER BULLET
+
+function setBulletPosition(targ, x, y) {
+    targ.style.transform = "translate(" + x + "px, " + y + "px)";
+};
+
+function createBullet(container, x, y, angle) {
+    var element = document.createElement("div");
+    element.className = "bullet";
+
+    container.appendChild(element);
+
+    var bullet = {
+        element,
+        x,
+        y,
+        angle
+    };
+    BULLET_CONFIG.BULLETS_LIST.push(bullet);
+
+    setPosition(element, x, y, angle);
+}
+
+function updateBullet(dateTime, container) {
+    var bullets = BULLET_CONFIG.BULLETS_LIST;
+
+    for (var i = 0; i < bullets.length; i++) {
+        var bullet = bullets[i];
+        bullet.y -= dateTime * BULLET_CONFIG.MAX_SPEED;
+
+        if (bullet.y < 0) {
+            destroyBullet(container, bullet);
+        }
+        // BULLET_CONFIG.ANGLE = Math.atan2(-TURRET_CONFIG.BASE_X, -(TURRET_CONFIG.BASE_Y)) * (180 / Math.PI);
+        bullet.angle = Math.atan2(-TURRET_CONFIG.BASE_X, -(TURRET_CONFIG.BASE_Y)) * (180 / Math.PI);
+
+        setPosition(bullet.element, bullet.x, bullet.y, bullet.angle  );
+    }
+    BULLET_CONFIG.BULLETS_LIST = BULLET_CONFIG.BULLETS_LIST.filter(e => !e.isDead);
+}
+
+function destroyBullet(container, bullet) {
+    container.removeChild(bullet.element);
+    bullet.isDead = true;
+}
+
+
+
 // #endregion
 // RENDER GAME
 
 function renderGame() {
-    var cannon = document.querySelector(".game");
+    var container = document.querySelector(".game");
+    var currentTime = Date.now();
+    var dataTime = (currentTime - GAME_STATE.lastTime) / 1000;
 
-    updatePlayer();
+    updatePlayer(container);
+    updateBullet(dataTime, container);
     // cannon.addEventListener("mousemove", getMouseDirection);
 
-    // GAME_STATE.lastTime = currentTime;
+    GAME_STATE.lastTime = currentTime;
     window.requestAnimationFrame(renderGame);
 }
 
 // #region key handler
 
 function getMouseDirection(e) {
-    var turret = document.querySelector('.turret');
-    MOUSE_CONFIG.POSITION_X = e.clientX - PLAYER_CONFIG.WIDTH / 2;
-    MOUSE_CONFIG.POSITION_Y = e.clientY + PLAYER_CONFIG.HEIGHT / 2;
-    TURRET_CONFIG.BASE_X = GAME_CONFIG.WIDTH / 1.5;
-    TURRET_CONFIG.BASE_Y = GAME_CONFIG.HEIGHT / 1.5;
+    // e.preventDefault();
+    MOUSE_CONFIG.POSITION_X = e.clientX + 20;  // e.clientX + 20
+    MOUSE_CONFIG.POSITION_Y = e.clientY + 50;   // e.clientY + 50
+    TURRET_CONFIG.BASE_X = GAME_CONFIG.WIDTH / 1.5;     // GAME_CONFIG.WIDTH / 1.5
+    TURRET_CONFIG.BASE_Y = GAME_CONFIG.HEIGHT / 1.5;    // GAME_CONFIG.HEIGHT / 1.5 
 
     TURRET_CONFIG.ANGLE = Math.atan2(MOUSE_CONFIG.POSITION_X - TURRET_CONFIG.BASE_X, -(MOUSE_CONFIG.POSITION_Y - TURRET_CONFIG.BASE_Y)) * (180 / Math.PI);
     TURRET_CONFIG.ANGLE -= PLAYER_CONFIG.ANGLE;
-    TURRET_CONFIG.ANGLE = turret.style.transform = 'rotate(' + TURRET_CONFIG.ANGLE + 'deg)';
 }
 
 function keyDown(e) {
@@ -184,14 +296,11 @@ function keyDown(e) {
         GAME_STATE.rotate_Right = true;
     } else if (e.keyCode === GAME_CONTROL.KEY_A) {
         GAME_STATE.rotate_Left = true;
-    } else if (e.keyCode === GAME_CONTROL.SPACE) {
-        GAME_STATE.spacePressed = true;
     } else if (e.keyCode === GAME_CONTROL.KEY_Q) {
         GAME_STATE.q_key = true;
     } else if (e.keyCode === GAME_CONTROL.KEY_E) {
         GAME_STATE.e_key = true;
-    }
-    else if (event.keyCode === GAME_CONTROL.KEY_R) {
+    } else if (event.keyCode === GAME_CONTROL.KEY_R) {
         if (!GAME_STATE.r_key) {
             GAME_STATE.r_key = true;
             window.addEventListener('mousemove', getMouseDirection)
@@ -202,6 +311,8 @@ function keyDown(e) {
             window.removeEventListener('mousemove', getMouseDirection);
             return;
         }
+    } else if (e.keyCode === GAME_CONTROL.SPACE) {
+        GAME_STATE.spacePressed = true;
     }
 };
 
@@ -214,18 +325,17 @@ function keyUp(e) {
         GAME_STATE.rotate_Right = false;
     } else if (e.keyCode === GAME_CONTROL.KEY_A) {
         GAME_STATE.rotate_Left = false;
-    } else if (e.keyCode === GAME_CONTROL.SPACE) {
-        GAME_STATE.spacePressed = false;
     } else if (e.keyCode === GAME_CONTROL.KEY_Q) {
         GAME_STATE.q_key = false;
     } else if (e.keyCode === GAME_CONTROL.KEY_E) {
         GAME_STATE.e_key = false;
+    }else if (e.keyCode === GAME_CONTROL.SPACE) {
+        GAME_STATE.spacePressed = false;
     }
 };
 
 window.addEventListener('keydown', keyDown);
 window.addEventListener('keyup', keyUp);
-// window.addEventListener('keypress', keyPress)
 window.requestAnimationFrame(renderGame);
 
 // #endregion
