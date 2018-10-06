@@ -65,7 +65,7 @@ var GAME_STATE = {
     e_key: false,
     spacePressed: false,
     turret_reloaded: false,
-    bullet_ready: false, // not use yet
+    bullet_ready: false,
 };
 
 // #endregion
@@ -78,18 +78,6 @@ function setPosition(targ, x, y, deg) {
 
 function setRotation(container, deg) {
     container.style.transform = "rotate(" + deg + "deg)";
-}
-
-function reloadBullet(countdown) {
-    var counter = document.querySelector('.sideRight')
-    counter.innerText = 'Bullet Reload: ' + countdown + 's';
-
-    countdown--
-    if (countdown === 0) {
-        GAME_STATE.turret_reloaded = true;
-        countdown.innerText = 'Bullet Reload: ' + BULLET_CONFIG.START_COUNT_DOWN + 's';
-        clearInterval();
-    }
 }
 
 function borderCollision(value, min, max) {
@@ -159,45 +147,38 @@ function updatePlayer(container) {
         TURRET_CONFIG.ANGLE++;
     }
     if (GAME_STATE.spacePressed) {
-        if (GAME_STATE.bullet_ready && !GAME_STATE.turret_reloaded) {
-            createBullet(container, PLAYER_CONFIG.POSITION_X, PLAYER_CONFIG.POSITION_Y, PLAYER_CONFIG.ANGLE)
-            GAME_STATE.bullet_ready = false;
-            console.log(GAME_STATE.bullet_ready);
-            sideRight.innerHTML = 'Reload ise needed';
-            return;
-        }
-        if (GAME_STATE.turret_reloaded) {
-            console.log('reload in progress');
-            return;
-        }
-        if (!GAME_STATE.bullet_ready) {
-            console.log('reloading');
+
+        if (!GAME_STATE.turret_reloaded & !GAME_STATE.bullet_ready) {
             GAME_STATE.turret_reloaded = true;
             TURRET_CONFIG.START_COUNT_DOWN = TURRET_CONFIG.COUNTDOWN;
-            console.log('ball ready in ' + TURRET_CONFIG.START_COUNT_DOWN);
-            sideRight.innerHTML = 'Ready in ' + TURRET_CONFIG.START_COUNT_DOWN + 's';
+            sideRight.innerHTML = 'Bullet ready in ' + TURRET_CONFIG.START_COUNT_DOWN + 's';
 
             var interval = setInterval(() => {
                 TURRET_CONFIG.START_COUNT_DOWN--;
-                console.log('ball ready in ' + TURRET_CONFIG.START_COUNT_DOWN)
-                sideRight.innerHTML = 'Ready in ' + TURRET_CONFIG.START_COUNT_DOWN + 's';
-
+                sideRight.innerHTML = 'Bullet ready in ' + TURRET_CONFIG.START_COUNT_DOWN + 's';
             }, 1000);
 
             setTimeout(() => {
                 GAME_STATE.bullet_ready = true;
                 GAME_STATE.turret_reloaded = false;
-                sideRight.innerHTML = 'Ready';
-                console.log('bulletReady');
+                GAME_STATE.spacePressed = false;
+                sideRight.innerHTML = 'Bullet ready ........';
                 clearInterval(interval);
             }, 3000);
             return;
         }
+        if (GAME_STATE.bullet_ready && !GAME_STATE.turret_reloaded) {
+            createBullet(container, PLAYER_CONFIG.POSITION_X - 9, PLAYER_CONFIG.POSITION_Y - 80, TURRET_CONFIG.ANGLE)
+            console.log('before: ' + GAME_STATE.bullet_ready);
+            console.log('before: ' + GAME_STATE.turret_reloaded);
+            GAME_STATE.bullet_ready = false;
+            GAME_STATE.spacePressed = false;
+            console.log('after: ' + GAME_STATE.bullet_ready);
+            console.log('after: ' + GAME_STATE.turret_reloaded);
+            sideRight.innerHTML = 'Reload is needed';
+            return;
+        }
     }
-
-
-
-
     PLAYER_CONFIG.POSITION_X = borderCollision(PLAYER_CONFIG.POSITION_X,
         0 - PLAYER_CONFIG.WIDTH,
         GAME_CONFIG.WIDTH + PLAYER_CONFIG.WIDTH);
@@ -239,14 +220,13 @@ function updateBullet(dateTime, container) {
     for (var i = 0; i < bullets.length; i++) {
         var bullet = bullets[i];
         bullet.y -= dateTime * BULLET_CONFIG.MAX_SPEED;
-
         if (bullet.y < 0) {
             destroyBullet(container, bullet);
         }
-        // BULLET_CONFIG.ANGLE = Math.atan2(-TURRET_CONFIG.BASE_X, -(TURRET_CONFIG.BASE_Y)) * (180 / Math.PI);
-        bullet.angle = Math.atan2(-TURRET_CONFIG.BASE_X, -(TURRET_CONFIG.BASE_Y)) * (180 / Math.PI);
+        BULLET_CONFIG.ANGLE = Math.atan2(-TURRET_CONFIG.BASE_X, -(TURRET_CONFIG.BASE_Y)) * (180 / Math.PI);
+        // bullet.angle = Math.atan2(-TURRET_CONFIG.BASE_X, -(TURRET_CONFIG.BASE_Y)) * (180 / Math.PI);
 
-        setPosition(bullet.element, bullet.x, bullet.y, bullet.angle  );
+        setPosition(bullet.element, bullet.x, bullet.y, bullet.angle);
     }
     BULLET_CONFIG.BULLETS_LIST = BULLET_CONFIG.BULLETS_LIST.filter(e => !e.isDead);
 }
@@ -256,6 +236,7 @@ function destroyBullet(container, bullet) {
     bullet.isDead = true;
 }
 
+// turret
 
 
 // #endregion
@@ -265,9 +246,15 @@ function renderGame() {
     var container = document.querySelector(".game");
     var currentTime = Date.now();
     var dataTime = (currentTime - GAME_STATE.lastTime) / 1000;
-
     updatePlayer(container);
     updateBullet(dataTime, container);
+    for (var i = 0; i < BULLET_CONFIG.BULLETS_LIST.length; i++) {
+        const bullet = BULLET_CONFIG.BULLETS_LIST[i];
+        setTimeout(() => {
+            destroyBullet(container, bullet );
+        }, 3000);
+        
+    }
     // cannon.addEventListener("mousemove", getMouseDirection);
 
     GAME_STATE.lastTime = currentTime;
@@ -329,9 +316,10 @@ function keyUp(e) {
         GAME_STATE.q_key = false;
     } else if (e.keyCode === GAME_CONTROL.KEY_E) {
         GAME_STATE.e_key = false;
-    }else if (e.keyCode === GAME_CONTROL.SPACE) {
-        GAME_STATE.spacePressed = false;
     }
+    //  else if (e.keyCode === GAME_CONTROL.SPACE) {
+    //     GAME_STATE.spacePressed = false;
+    // }
 };
 
 window.addEventListener('keydown', keyDown);
